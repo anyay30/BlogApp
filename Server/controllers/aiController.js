@@ -12,6 +12,14 @@ export const generateBlogContent = async (req, res) => {
             });
         }
 
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(503).json({
+                success: false,
+                code: "AI_NOT_CONFIGURED",
+                message: "AI content generation is not configured on the server. Set GEMINI_API_KEY and try again."
+            });
+        }
+
         const ai = new GoogleGenAI({
             apiKey: process.env.GEMINI_API_KEY
         });
@@ -38,11 +46,15 @@ Requirements:
 `;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.6-flash",
             contents: prompt
         });
 
         const content = response.text;
+
+        if (!content) {
+            throw new Error("The AI service returned an empty response");
+        }
 
         res.status(200).json({
             success: true,
@@ -50,11 +62,23 @@ Requirements:
         });
 
     } catch (error) {
-        console.error("AI generation error:", error);
 
-        res.status(500).json({
+        const providerStatus = Number(error.status ?? error.code);
+        const providerCode = String(error.status ?? error.code ?? "").toUpperCase();
+        const isTemporary = providerStatus === 429 || providerStatus === 503 ||
+            providerCode === "UNAVAILABLE" || providerCode === "RESOURCE_EXHAUSTED";
+
+        console.error("AI generation failed", {
+            status: Number.isFinite(providerStatus) ? providerStatus : undefined,
+            code: providerCode || undefined
+        });
+
+        res.status(isTemporary ? 503 : 502).json({
             success: false,
-            message: error.message || "Failed to generate content"
+            code: isTemporary ? "AI_TEMPORARILY_UNAVAILABLE" : "AI_GENERATION_FAILED",
+            message: isTemporary
+                ? "Gemini is temporarily busy. Please wait a moment, then try again."
+                : "The AI service could not generate content. Please try again."
         });
     }
 };

@@ -22,6 +22,29 @@ export const getComments = async (req, res) => {
 
   }
 };
+// GET approved comments for a particular blog
+export const getBlogComments = async (req, res) => {
+  try {
+
+    const comments = await Comment.find({
+      blog: req.params.blogId,
+      isApproved: true
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      comments
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};
 
 
 // CREATE comment
