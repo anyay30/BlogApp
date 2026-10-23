@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar'
 import Header from '../components/Header'
 import BlogList from '../components/BlogList'
-import NewsLetter from '../components/NewsLetter'
+import Newsletter from '../components/Newsletter'
 import Footer from '../components/Footer'
 //import Blog from '../components/Blog'
 const Home = () => {
@@ -10,7 +10,7 @@ const Home = () => {
         <Navbar/>
         <Header/>
         <BlogList/>
-        <NewsLetter/>
+        <Newsletter/>
         <Footer/>
     </>
   )
